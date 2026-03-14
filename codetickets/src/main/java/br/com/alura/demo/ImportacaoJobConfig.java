@@ -64,13 +64,14 @@ public class ImportacaoJobConfig {
     @Bean
     public ItemWriter<Importacao> writer(DataSource dataSource) {
         return new JdbcBatchItemWriterBuilder<Importacao>()
-                .dataSource(dataSource)
-                .sql(
+                .dataSource(dataSource)  // Especifica a fonte de dados (DataSource) que será usada para se conectar ao banco de dados e executar as operações de escrita
+                .sql( // Define a consulta SQL que será usada para inserir os dados processados no banco de dados.
                         "INSERT INTO importacao (id, cpf, cliente, evento, data, tipo_ingresso, valor, hora_importacao) VALUES" +
                                 "(:id, :cpf, :cliente, :evento, :data, :tipo_ingresso, :valor, " + LocalDateTime.now() + ")"
 
                 )
-                .itemSqlParameterSourceProvider(new BeanPropertyItemSqlParameterSourceProvider<>())
+                .itemSqlParameterSourceProvider(new BeanPropertyItemSqlParameterSourceProvider<>()) // Especifica o provedor de parâmetros SQL que será usado para mapear os campos dos objetos Importacao para os parâmetros nomeados na consulta SQL.
+                // O BeanPropertyItemSqlParameterSourceProvider é uma implementação que mapeia os campos dos objetos para os parâmetros com base nos nomes dos campos.
                 .build();
     }
 }
