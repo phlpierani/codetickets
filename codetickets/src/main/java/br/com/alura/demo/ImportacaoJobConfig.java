@@ -56,6 +56,7 @@ public class ImportacaoJobConfig {
                 .resource(new FileSystemResource("files/dados.csv")) // Especifica o recurso de entrada, que neste caso é um arquivo CSV localizado no sistema de arquivos
                 .comments("--") // Define o prefixo para linhas de comentário no arquivo CSV, que serão ignoradas durante a leitura
                 .delimited() // Especifica que o arquivo é delimitado (por exemplo,
+                .delimiter(";") // Define o delimitador usado para separar os campos no arquivo CSV, que neste caso é um ponto e vírgula (;)
                 .names("cpf", "cliente", "nascimento", "evento", "data", "tipoIngresso", "valor") // Define os nomes das colunas no arquivo CSV, que serão mapeados para os campos da classe Importacao
                 .targetType(Importacao.class) // Especifica a classe de destino para o mapeamento dos dados lidos do arquivo CSV, permitindo que os dados sejam convertidos em objetos do tipo Importacao
                 .build();
