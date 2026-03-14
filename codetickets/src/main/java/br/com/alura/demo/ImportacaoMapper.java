@@ -5,6 +5,7 @@ import org.springframework.batch.infrastructure.item.file.transform.FieldSet;
 import org.springframework.validation.BindException;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 public class ImportacaoMapper implements FieldSetMapper<Importacao> {
@@ -22,6 +23,7 @@ public class ImportacaoMapper implements FieldSetMapper<Importacao> {
         importacao.setData(LocalDate.parse(fieldSet.readString("data"), dateFormatter));
         importacao.setTipoIngresso(fieldSet.readString("tipoIngresso"));
         importacao.setValor(fieldSet.readDouble("valor"));
+        importacao.setHoraImportacao(LocalDateTime.now());
         return importacao;
 
     }
