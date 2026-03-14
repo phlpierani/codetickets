@@ -18,7 +18,6 @@ import org.springframework.core.io.FileSystemResource;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import javax.sql.DataSource;
-import java.time.LocalDateTime;
 
 @Configuration
 public class ImportacaoJobConfig {
@@ -44,6 +43,7 @@ public class ImportacaoJobConfig {
         return new StepBuilder("passo-inicial", jobRepository)
                 .<Importacao, Importacao>chunk(100) // Define o tamanho do chunk para processamento em lotes
                 .reader(reader) // Define o leitor de itens, que é responsável por ler os dados de origem (por exemplo, um arquivo CSV ou um banco de dados)
+                .processor(processor()) // Define o processador de itens, que é responsável por processar os dados lidos e transformá-los conforme necessário
                 .writer(writer) // Define o escritor de itens, que é responsável por escrever os dados processados para o destino (por exemplo, um banco de dados)
                 .transactionManager(transactionManager) // Define o gerenciador de transações para garantir que as operações de leitura e escrita sejam realizadas
                 .build();
@@ -58,7 +58,7 @@ public class ImportacaoJobConfig {
                 .delimited() // Especifica que o arquivo é delimitado (por exemplo,
                 .delimiter(";") // Define o delimitador usado para separar os campos no arquivo CSV, que neste caso é um ponto e vírgula (;)
                 .names("cpf", "cliente", "nascimento", "evento", "data", "tipoIngresso", "valor") // Define os nomes das colunas no arquivo CSV, que serão mapeados para os campos da classe Importacao
-                .targetType(Importacao.class) // Especifica a classe de destino para o mapeamento dos dados lidos do arquivo CSV, permitindo que os dados sejam convertidos em objetos do tipo Importacao
+                .fieldSetMapper(new ImportacaoMapper())
                 .build();
     }
 
@@ -66,14 +66,17 @@ public class ImportacaoJobConfig {
     public ItemWriter<Importacao> writer(DataSource dataSource) {
         return new JdbcBatchItemWriterBuilder<Importacao>()
                 .dataSource(dataSource)  // Especifica a fonte de dados (DataSource) que será usada para se conectar ao banco de dados e executar as operações de escrita
-                .sql( // Define a consulta SQL que será usada para inserir os dados processados no banco de dados.
-                        "INSERT INTO importacao (id, cpf, cliente, evento, data, tipo_ingresso, valor, hora_importacao) VALUES" +
-                                "(:id, :cpf, :cliente, :evento, :data, :tipo_ingresso, :valor, " + LocalDateTime.now() + ")"
-
+                .sql("INSERT INTO importacao (cpf, cliente, nascimento, evento, data, tipo_ingresso, valor, hora_importacao, taxa_adm) " +
+                                "VALUES (:cpf, :cliente, :nascimento, :evento, :data, :tipoIngresso, :valor, :horaImportacao, :taxaAdm)"
                 )
                 .itemSqlParameterSourceProvider(new BeanPropertyItemSqlParameterSourceProvider<>()) // Especifica o provedor de parâmetros SQL que será usado para mapear os campos dos objetos Importacao para os parâmetros nomeados na consulta SQL.
                 // O BeanPropertyItemSqlParameterSourceProvider é uma implementação que mapeia os campos dos objetos para os parâmetros com base nos nomes dos campos.
                 .build();
+    }
+
+    @Bean
+    public ImportacaoProcessor processor() {
+        return new ImportacaoProcessor();
     }
 }
 
