@@ -8,7 +8,8 @@ import org.springframework.batch.core.step.Step;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.infrastructure.item.ItemReader;
 import org.springframework.batch.infrastructure.item.ItemWriter;
-import org.springframework.batch.infrastructure.item.file.FlatFileItemReader;
+import org.springframework.batch.infrastructure.item.database.BeanPropertyItemSqlParameterSourceProvider;
+import org.springframework.batch.infrastructure.item.database.builder.JdbcBatchItemWriterBuilder;
 import org.springframework.batch.infrastructure.item.file.builder.FlatFileItemReaderBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -16,7 +17,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.transaction.PlatformTransactionManager;
 
-import java.io.Reader;
+import javax.sql.DataSource;
+import java.time.LocalDateTime;
 
 @Configuration
 public class ImportacaoJobConfig {
@@ -56,6 +58,19 @@ public class ImportacaoJobConfig {
                 .delimited() // Especifica que o arquivo é delimitado (por exemplo,
                 .names("cpf", "cliente", "nascimento", "evento", "data", "tipoIngresso", "valor") // Define os nomes das colunas no arquivo CSV, que serão mapeados para os campos da classe Importacao
                 .targetType(Importacao.class) // Especifica a classe de destino para o mapeamento dos dados lidos do arquivo CSV, permitindo que os dados sejam convertidos em objetos do tipo Importacao
+                .build();
+    }
+
+    @Bean
+    public ItemWriter<Importacao> writer(DataSource dataSource) {
+        return new JdbcBatchItemWriterBuilder<Importacao>()
+                .dataSource(dataSource)
+                .sql(
+                        "INSERT INTO importacao (id, cpf, cliente, evento, data, tipo_ingresso, valor, hora_importacao) VALUES" +
+                                "(:id, :cpf, :cliente, :evento, :data, :tipo_ingresso, :valor, " + LocalDateTime.now() + ")"
+
+                )
+                .itemSqlParameterSourceProvider(new BeanPropertyItemSqlParameterSourceProvider<>())
                 .build();
     }
 }
